@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <title>three.js - Jotunheimen</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+        }
+    </style>
+    <script src="./three.min.js"></script>
+    <script src="./TrackballControls.js"></script>
+    <script type="text/javascript" src="./stats.js"></script>
+    <script src="./keyboard.js"></script>
+    <script src="./jquery-1.10.2.js"></script>
+</head>
+<body>
+    <div id="game"></div>
+    <div id="stats"></div>
+
+
+<script>
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1, 1000);
+    const axes = new THREE.AxisHelper(100);
+
+    scene.add(axes);
+
+    const renderer = new THREE.WebGLRenderer();
+
+    camera.position.set(0, 0, 300);
+
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    const combined = new THREE.Geometry();
+
+    const geometry = new THREE.PlaneGeometry(200, 200, 1, 1);
+    new THREE.TextureLoader().load(`./${211}.jpeg`, (texture) => {
+        const material = new THREE.MeshBasicMaterial( { map: texture } );
+        const plane = new THREE.Mesh( geometry, material );
+//        scene.add( plane );
+
+        combined.merge( geometry );
+//        wireframe = new THREE.WireframeHelper( plane, 0x00ff00 );
+//        scene.add( wireframe );
+    })
+
+scene.add(new THREE.Mesh( combined, new THREE.MeshBasicMaterial( { color: 0xff0000 } ) ))
+
+/*
+    var geometry = new THREE.CubeGeometry(7, 7, 0, 0, 0, 0);
+
+    var mesh1 = new THREE.Mesh( geometry );
+    mesh1.position.x = 7;
+
+    var mesh2 = new THREE.Mesh( geometry );
+    mesh2.position.y = 7;
+
+    var mesh3 = new THREE.Mesh( geometry );
+    mesh3.position.z = 7;
+
+    THREE.GeometryUtils.merge( combined, mesh1 );
+    THREE.GeometryUtils.merge( combined, mesh2 );
+
+
+    var mesh = new THREE.Mesh( combined, new THREE.MeshBasicMaterial( { color: 0xff0000 } ) );
+*/
+//    scene.add( new THREE.Mesh(combined) );
+
+/*
+    var Z_tile_map = [];
+
+
+    var material = new THREE.MeshPhongMaterial( { map: THREE.ImageUtils.loadTexture('./landmap_square.png')} );
+    var tiles=[];
+    var map={'w':2040,'h':1258};
+    //var map={'w':2048,'h':2048};
+    var pixelx=1/map.w;
+    var pixely=1/map.h;
+
+    var tileJson=[];
+    geometry.faceVertexUvs[0]=[];
+
+    $.getJSON("./haha.json", function (json) {
+        Z_tile_map = json;
+        //console.log(Z_tile_map);
+        $.getJSON("./landmap_square.json", function ({ frames }) {
+            tileJson = frames;
+
+            const keys = Object.keys(frames);
+            const newFrames = {};
+
+            for(const key of keys) {
+                const parsKey = parseInt(key, 16);
+
+                newFrames[parsKey] = frames[key];
+            }
+
+//            console.log(123, newFrames)
+
+            i = 0;
+
+            /// PRIMER
+            const combined = new THREE.Geometry();
+
+            var geometry = new THREE.CubeGeometry(7, 7, 0, 0, 0, 0);
+
+            var mesh1 = new THREE.Mesh( geometry );
+            mesh1.position.x = 7;
+
+            var mesh2 = new THREE.Mesh( geometry );
+            mesh2.position.y = 7;
+
+            var mesh3 = new THREE.Mesh( geometry );
+            mesh3.position.z = 7;
+
+            THREE.GeometryUtils.merge( combined, mesh1 );
+            THREE.GeometryUtils.merge( combined, mesh2 );
+            THREE.GeometryUtils.merge( combined, mesh3 );
+
+            var mesh = new THREE.Mesh( combined, new THREE.MeshBasicMaterial( { color: 0xff0000 } ) );
+            scene.add( mesh );
+            /////
+
+            for(let y = 0; y < result.length; y++) {
+                for(let x = 0; x < result[y].length; x++) {
+                    const { id, z } = result[y][x];
+
+                    geometry.vertices[y * result.length + x + y].z = z / 8; // default 16
+//                    geometry.vertices[y * result.length + x + y].z = z / 16; // default 16
+
+                    j = (y * result.length + x +y) * 2;
+
+//                    console.log({ id, z })
+
+                    var tmp = {'x': 0, 'y': 0, 'x1': 0, 'y1': 0};
+                    //console.log(k);
+                    tmp.x = (newFrames[id].frame.x + 1) * pixelx;
+                    tmp.y = 1-( newFrames[id].frame.y + 1) * pixely;
+                    tmp.x1 = (newFrames[id].frame.x + newFrames[id].frame.w - 1) * pixelx;
+                    tmp.y1 = 1-((newFrames[id].frame.y + newFrames[id].frame.h - 1)) * pixely;
+
+                    const texture = new THREE.TextureLoader().load(`http://localhost:3000/texture-map/${id}`);
+                    console.log(123, texture)
+                    const material = new THREE.MeshBasicMaterial({ map : texture })
+
+                    tiles[id] = [
+                        new THREE.Vector2(tmp.x1, tmp.y),
+                        new THREE.Vector2(tmp.x, tmp.y),
+                        new THREE.Vector2(tmp.x, tmp.y1),
+                        new THREE.Vector2(tmp.x1, tmp.y1)
+                    ];
+
+                    geometry.faceVertexUvs[0][j] = [ tiles[id][0], tiles[id][1], tiles[id][3]];
+                    geometry.faceVertexUvs[0][j + 1] = [tiles[id][1], tiles[id][2], tiles[id][3]];
+
+                    console.log(geometry)
+
+                }
+            }
+
+
+
+
+
+            geometry.vertices[0].z = 10;
+
+            var plane = new THREE.Mesh(geometry, material);
+            plane.antialias=true;
+            plane.mipMap=true;
+            scene.add(plane);
+
+	    wireframe = new THREE.WireframeHelper( plane, 0x00ff00 );
+
+	    scene.add( wireframe );
+        });
+    });
+
+*/
+
+
+
+
+
+    // add subtle ambient lighting
+//    var ambientLight = new THREE.AmbientLight(0xbbbbbb);
+//    scene.add(ambientLight);
+
+    // directional lighting
+//    var directionalLight = new THREE.DirectionalLight(0xffffff);
+//    directionalLight.position.set(1, 1, 1).normalize();
+//    scene.add(directionalLight);
+
+//    var controls = new THREE.TrackballControls(camera);
+    document.getElementById('game').appendChild(renderer.domElement);
+
+
+    function initStats() {
+        var stats = new Stats();
+        stats.setMode(0);
+        stats.domElement.style.position = 'absolute';
+        stats.domElement.style.left = '0px';
+        stats.domElement.style.top = '0px';
+        $("#stats").append(stats.domElement);
+        return stats;
+    }
+
+    var stats = initStats();
+
+    render();
+    function render() {
+        camera.up = new THREE.Vector3(0,0,1);
+        stats.update();
+//        controls.update();
+        requestAnimationFrame(render);
+        renderer.render(scene, camera);
+    }
+</script>
+</body>
+</html>
