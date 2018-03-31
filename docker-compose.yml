@@ -1,0 +1,10 @@
+version: '3'
+services:
+  web:
+    build: .
+    command: yarn start:dev
+    volumes:
+      - .:/usr/app/
+      - /usr/app/node_modules
+    ports:
+      - "3000:3000"
