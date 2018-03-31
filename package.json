@@ -1,28 +1,19 @@
 {
   "license": "MIT",
   "dependencies": {
-    "binreader": "^0.0.6",
-    "koa": "^2.5.0",
-    "koa-router": "^7.4.0",
-    "lodash.uniqueid": "4.x.x",
-    "node-sprite": "^0.1.2",
-    "sharp": "^0.20.0",
-    "spritesmith": "^3.3.0",
-    "uodatareader": "^1.0.14",
-    "webpack-cli": "^2.0.11"
+    "@lamo2k123/bin-reader": "1.x.x"
   },
   "devDependencies": {
-    "@babel/core": "7.0.0-beta.40",
-    "@types/koa": "2.x.x",
-    "babel-loader": "8.0.0-beta.2",
     "daemon-command-webpack-plugin": "1.x.x",
     "ts-loader": "4.x.x",
     "typescript": "2.x.x",
-    "webpack": "4.x.x"
+    "webpack": "4.x.x",
+    "webpack-cli": "2.x.x",
+    "webpack-node-externals": "1.x.x"
   },
   "scripts": {
-    "start:server": "node build/server",
-    "tsc": "tsc",
-    "build:node": "webpack --config=webpack/node"
+    "start:dev": "yarn build:services --watch",
+    "start:services": "node build/services",
+    "build:services": "webpack --config=webpack/node"
   }
 }
