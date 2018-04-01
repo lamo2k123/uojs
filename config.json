@@ -1,8 +1,6 @@
 {
-  "dir": {
-    "cache": "./cache"
-  },
-  "uo": {
-    "dir": "./uo"
-  }
+    "dir": {
+        "build": "./build",
+        "cache": "./cache"
+    }
 }

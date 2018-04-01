@@ -1,7 +1,8 @@
 {
   "license": "MIT",
   "dependencies": {
-    "@lamo2k123/bin-reader": "1.x.x"
+    "@lamo2k123/bin-reader": "1.x.x",
+    "ajv": "6.x.x"
   },
   "devDependencies": {
     "daemon-command-webpack-plugin": "1.x.x",

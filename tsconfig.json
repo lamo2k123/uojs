@@ -17,14 +17,14 @@
         "moduleResolution": "node",
         "baseUrl": "./",
         "paths": {
-            "service/*": [
-                "src/services/*"
-            ]
+            "service/*": ["src/services/*"],
+            "config": ["config"]
         },
         "esModuleInterop": true
     },
     "include": [
-        "./src"
+        "./src",
+        "./typings"
     ],
     "exclude": [
         "node_modules",
