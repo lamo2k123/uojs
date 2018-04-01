@@ -10,9 +10,12 @@
                 },
                 "cache": {
                     "type": "string"
+                },
+                "uo": {
+                    "type": "string"
                 }
             },
-            "required": ["build", "cache"]
+            "required": ["build", "cache", "uo"]
         }
     }
 }
