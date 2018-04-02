@@ -3,6 +3,7 @@ import map from 'service/map';
 
 Promise.all([
     config.validation,
+    map.validation
 ])
     .then(console.log)
     .catch(console.error);

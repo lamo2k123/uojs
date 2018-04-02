@@ -14,7 +14,9 @@ export class Config {
             if(validate) {
                 resolve(validate);
             } else {
-                reject(this.ajv.errors);
+                console.error('[Config:validation] %o', this.ajv.errors);
+
+                reject(false);
             }
         });
     }

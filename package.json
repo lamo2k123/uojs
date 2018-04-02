@@ -5,6 +5,7 @@
     "ajv": "6.x.x"
   },
   "devDependencies": {
+    "@types/node": "9.x.x",
     "daemon-command-webpack-plugin": "1.x.x",
     "ts-loader": "4.x.x",
     "typescript": "2.x.x",
