@@ -1,0 +1,21 @@
+{
+  "license": "MIT",
+  "dependencies": {
+    "@lamo2k123/bin-reader": "1.x.x",
+    "ajv": "6.x.x"
+  },
+  "devDependencies": {
+    "@types/node": "9.x.x",
+    "daemon-command-webpack-plugin": "1.x.x",
+    "ts-loader": "4.x.x",
+    "typescript": "2.x.x",
+    "webpack": "4.x.x",
+    "webpack-cli": "2.x.x",
+    "webpack-node-externals": "1.x.x"
+  },
+  "scripts": {
+    "start:dev": "yarn build:services --watch",
+    "start:services": "node build/services",
+    "build:services": "webpack --config=webpack/node"
+  }
+}

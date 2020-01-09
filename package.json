@@ -1,21 +1,29 @@
 {
+  "name": "ultima-online",
+  "version": "0.0.1",
+  "description": "Ultima Online (JavaScript client & server)",
+  "main": "index.js",
+  "repository": "git@github.com:lamo2k123/uojs.git",
+  "author": "lamo2k123 <lamo2k123@gmail.com>",
   "license": "MIT",
-  "dependencies": {
-    "@lamo2k123/bin-reader": "1.x.x",
-    "ajv": "6.x.x"
-  },
-  "devDependencies": {
-    "@types/node": "9.x.x",
-    "daemon-command-webpack-plugin": "1.x.x",
-    "ts-loader": "4.x.x",
-    "typescript": "2.x.x",
-    "webpack": "4.x.x",
-    "webpack-cli": "2.x.x",
-    "webpack-node-externals": "1.x.x"
+  "engines": {
+    "node": ">=13"
   },
   "scripts": {
-    "start:dev": "yarn build:services --watch",
-    "start:services": "node build/services",
-    "build:services": "webpack --config=webpack/node"
+    "build:server": "tsc -p ./server/tsconfig.json",
+    "build:server:watch": "tsc -p ./server/tsconfig.json -w",
+    "jest": "jest"
+  },
+  "devDependencies": {
+    "@types/jest": "24.x.x",
+    "@types/lodash.uniqueid": "4.x.x",
+    "@types/node": "13.x.x",
+    "jest": "24.x.x",
+    "ts-jest": "24.x.x",
+    "tslint": "5.x.x",
+    "typescript": "3.x.x"
+  },
+  "dependencies": {
+    "lodash.uniqueid": "4.x.x"
   }
 }

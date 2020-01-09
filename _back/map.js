@@ -72,7 +72,7 @@ class BinReader {
 }
 
 const br = new BinReader({
-    file: resolve('./uo-data/map0LegacyMUL.uop')
+    file: resolve('./uo/map0LegacyMUL.uop')
 });
 
 const read = br.read('map0');

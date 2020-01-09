@@ -1,6 +1,6 @@
 const Texture = require('./uodatareader/texture');
 
-const texture = new Texture({ baseDirectory: './uo-data' });
+const texture = new Texture({ baseDirectory: './uo' });
 
 console.log(texture.loadTexture(211).jpeg().toFile('output-2.jpeg'))
 
@@ -12,8 +12,8 @@ const TextureMap = require('./reader/texture-map');
 const textureMap = new TextureMap({
     extra: true,
     file : {
-        index: resolve('./uo-data/texidx.mul'),
-        data : resolve('./uo-data/texmaps.mul')
+        index: resolve('./uo/texidx.mul'),
+        data : resolve('./uo/texmaps.mul')
     }
 });
 

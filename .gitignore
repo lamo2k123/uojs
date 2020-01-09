@@ -1,7 +1,2 @@
-*.log
-node_modules/
-.idea/
-cache/
-uo-data/
-test/
-build/
+/node_modules/
+/.idea/
