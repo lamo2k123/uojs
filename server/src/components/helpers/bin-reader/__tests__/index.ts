@@ -109,5 +109,30 @@ describe('Buffer', () => {
             expect(reader2.isEnd()).toEqual(true);
         });
 
+        test('read', () => {
+            const br = new BinReader(src);
+            const reader = br.read();
+
+            const read1 = [reader.nextInt(1), reader.nextInt(1)];
+            expect(String.fromCharCode(...read1)).toEqual('Te');
+
+            const read2 = [reader.nextInt(1), reader.nextInt(1), reader.nextInt(1), reader.nextInt(1), reader.nextInt(1)];
+            expect(String.fromCharCode(...read2)).toEqual('st bu');
+
+            reader.setPosition(0);
+            const read3 = [reader.nextInt(1), reader.nextInt(1), reader.nextInt(1), reader.nextInt(1)];
+            expect(String.fromCharCode(...read3)).toEqual('Test');
+
+            reader.setPosition(1);
+            const read4 = [reader.nextInt(1), reader.nextInt(1), reader.nextInt(1)];
+            expect(String.fromCharCode(...read4)).toEqual('est');
+
+            reader.setPosition(100);
+            try {
+                reader.nextInt(1);
+            } catch (e) {
+                expect(e.code).toEqual('ERR_OUT_OF_RANGE');
+            }
+        });
     });
 });

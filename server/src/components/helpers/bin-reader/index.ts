@@ -46,19 +46,20 @@ class BinReader {
         return false;
     };
 
-    int = (key: string, type: EReadType = EReadType.readIntLE, BYTE: number): number | void => {
-
-        if(typeof this._position[key] === 'number') {
-            this.setPosition(key, this._position[key] + BYTE);
-
-            if(this._buffer !== null) {
-                return this._buffer[type](this._position[key], BYTE);
-            } else {
-                console.warn('Incorrect buffer === null');
-            }
-        } else {
+    int = (key: string, type: EReadType = EReadType.readIntLE, BYTE: number): number => {
+        if(typeof this._position[key] !== 'number') {
             console.warn('Incorrect argument value `position: %n` or `BYTE: %n`', this._position[key], BYTE);
         }
+
+        if(this._buffer === null) {
+            console.warn('Incorrect buffer === null');
+        }
+
+        const result = this._buffer[type](this._position[key], BYTE);
+
+        this.setPosition(key, this._position[key] + BYTE);
+
+        return result;
     };
 
     read = (key: string = uniqueId('read-')) => {
