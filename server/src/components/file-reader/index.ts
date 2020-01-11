@@ -18,7 +18,7 @@ class Index {
         // @TODO: Validate options
         this._options = options;
 
-        this.readIndex();
+        this.generateEntries();
     }
 
     public get file() {
@@ -83,7 +83,7 @@ class Index {
         return hashes;
     };
 
-    readIndex() {
+    private generateEntries() {
         if(this.file.path) {
             const read = this.reader.read();
 
