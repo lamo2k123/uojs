@@ -1,7 +1,7 @@
 import { readFileSync, existsSync } from 'fs';
 import uniqueId from 'lodash.uniqueid';
 
-import { IPosition, TBuffer, EReadType } from './types';
+import { IPosition } from './types';
 
 class BinReader {
 
@@ -46,20 +46,16 @@ class BinReader {
         return false;
     };
 
-    int = (key: string, type: EReadType = EReadType.readIntLE, BYTE: number): number => {
-        if(typeof this._position[key] !== 'number') {
-            console.warn('Incorrect argument value `position: %n` or `BYTE: %n`', this._position[key], BYTE);
+    readAndMove = (key: string, method: 'readIntLE' | 'readUIntLE' | 'readBigInt64LE' | 'readBigUInt64LE', byte = 8): number | bigint => {
+        const currentPosition = this._position[key];
+
+        this.setPosition(key, this._position[key] + byte);
+
+        if(method === 'readBigInt64LE' || method === 'readBigUInt64LE') {
+            return this._buffer[method](currentPosition);
         }
 
-        if(this._buffer === null) {
-            console.warn('Incorrect buffer === null');
-        }
-
-        const result = this._buffer[type](this._position[key], BYTE);
-
-        this.setPosition(key, this._position[key] + BYTE);
-
-        return result;
+        return this._buffer[method](currentPosition, byte);
     };
 
     read = (key: string = uniqueId('read-')) => {
@@ -67,12 +63,18 @@ class BinReader {
 
         return {
             key,
-            nextInt    : (BYTE: number) => this.int(key, EReadType.readIntLE, BYTE),
-            nextUInt   : (BYTE: number) => this.int(key, EReadType.readUIntLE, BYTE),
-            isEnd      : () => this.isEnd(key),
-            skip       : (BYTE: number) => this.skip(key, BYTE),
-            setPosition: (position?: number) => this.setPosition(key, position),
-            getPosition: () => this._position[key]
+            nextInt8     : () => this.readAndMove(key, 'readIntLE', 1) as number,
+            nextInt16    : () => this.readAndMove(key, 'readIntLE', 2) as number,
+            nextInt32    : () => this.readAndMove(key, 'readIntLE', 4) as number,
+            nextBigInt64 : () => this.readAndMove(key, 'readBigInt64LE') as bigint,
+            nextUInt8    : () => this.readAndMove(key, 'readUIntLE', 1) as number,
+            nextUInt16   : () => this.readAndMove(key, 'readUIntLE', 2) as number,
+            nextUInt32   : () => this.readAndMove(key, 'readUIntLE', 4) as number,
+            nextBigUInt64: () => this.readAndMove(key, 'readBigUInt64LE') as bigint,
+            isEnd        : () => this.isEnd(key),
+            skip         : (BYTE: number) => this.skip(key, BYTE),
+            setPosition  : (position?: number) => this.setPosition(key, position),
+            getPosition  : () => this._position[key]
         };
     }
 }

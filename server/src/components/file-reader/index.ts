@@ -1,263 +1,149 @@
-import { basename } from 'path';
+import { basename, join, extname } from 'path';
+import { existsSync } from 'fs';
 
-import pad from 'component/helpers/pad';
+import hashFileName from './../helpers/hash-file-name';
+import BinReader from './../helpers/bin-reader';
 
-import { IOptions } from './types';
-
-const Test = (options: IOptions) => {
-    // @TODO: Validate options
-
-
-};
+import { IOptions, IHashes, IEntries, IFile } from './types';
 
 class Index {
 
-    private readonly _options!: IOptions | null;
-    private _pathFull!: string;
+    private readonly _options!: IOptions;
+
+    private _entries: IEntries = {};
+    private _file: IFile = {};
+    private _reader!: BinReader;
 
     constructor(options: IOptions) {
-        // @TODO: validate options
+        // @TODO: Validate options
         this._options = options;
 
+        this.readIndex();
     }
 
-    get pathFull(): string | null {
-        if(this._pathFull) {
-            return this._pathFull;
+    public get file() {
+        if(this._options.file && (!this._file.ext || !this._file.path || !this._file.base)) {
+            let ext = extname(this._options.file);
+            let base = basename(this._options.file, ext);
+            let path = join(this._options.dir, this._options.file);
+
+            if(ext === '.idx' && !existsSync(path)) {
+                const baseUOP = `${base}LegacyMUL`;
+                const pathUOP = join(this._options.dir, `${baseUOP}.uop`);
+
+                if(existsSync(pathUOP)) {
+                    ext = '.uop';
+                    path = pathUOP;
+                    base = baseUOP;
+                }
+            }
+
+            if(!this._file.ext) {
+                this._file.ext = ext;
+            }
+
+            if(!this._file.path) {
+                this._file.path = path;
+            }
+
+            if(!this._file.base) {
+                this._file.base = base;
+            }
         }
 
-        const indexFile = this._options.indexFile || this._options.mulFile;
+        return this._file;
     }
 
-    getFullPath() {
-        if (this.path) {
-            return this.path;
-        }
-        const indexFile = this.options.indexFile || this.options.mulFile;
-        let newPath = path.join(this.options.baseDirectory, indexFile);
-        const basename = path.basename(indexFile, '.idx');
-        if (fs.existsSync(newPath)) {
-            this.path = newPath;
-            this.isUOP = false;
-
-            return this.path;
+    public get reader() {
+        if(!this._reader) {
+            this._reader = new BinReader(this.file.path);
         }
 
-        newPath = path.join(this.options.baseDirectory, `${basename}LegacyMUL.uop`);
-        if (fs.existsSync(newPath)) {
-            this.path = newPath;
-            this.isUOP = true;
-
-            return this.path;
-        }
-
-        return null;
+        return this._reader;
     }
 
+    public get entries() {
+        return this._entries;
+    }
 
-    buildUOPHashes() {
-        const hashes = {};
-        const basename = basename(this.getFullPath().toLowerCase(), '.uop');
-        for(let i = 0; i < /*header.count*/this.options.length; i++) {
-            const filename = `build/${basename}/${pad(i, 8)}.${this.options.uopFileExtension}`;
-            const hashed = hash(filename).join('.');
-            hashes[hashed] = i;
+    private generateHashesUOP = (length: number) => {
+        const hashes: IHashes = {};
+
+        if(length && this.file.base && this._options.uopFileExt) {
+            const name = this.file.base.toLowerCase();
+
+            for(let i = 0; i < length; i++) {
+                const path = `build/${name}/${i.toString().padStart(8, '0')}.${this._options.uopFileExt}`;
+                const hashed = hashFileName(path);
+
+                hashes[hashed] = i;
+            }
         }
+
         return hashes;
+    };
+
+    readIndex() {
+        if(this.file.path) {
+            const read = this.reader.read();
+
+            // Mythic Package File Format - https://github.com/lamo2k123/uojs/wiki/Mythic-Package-File-Format-(.UOP)
+            if(this.file.ext === '.uop') {
+                if(read.nextInt32() !== 0x50594D) {
+                    throw Error('MYP0 byte invalid!');
+                }
+
+                read.skip(8);
+
+                let position = Number(read.nextBigInt64());
+
+                read.skip(4);
+
+                const length = read.nextInt32();
+                const hashes = this.generateHashesUOP(length);
+
+                this._entries.lookup = new Int32Array(length);
+                this._entries.length = new Int32Array(length);
+
+                if(this._options.hasExtra) {
+                    this._entries.extra = new Int32Array(length);
+                }
+
+                read.setPosition(position);
+
+                do {
+                    const count = read.nextInt32();
+                    position = Number(read.nextBigInt64());
+
+                    for(let i = 0; i < count; i++) {
+                        const offset = Number(read.nextBigInt64());
+                        const headerLength = read.nextInt32();
+                        const compressedLength = read.nextInt32();
+                        const decompressedLength = read.nextInt32();
+                        const hash = read.nextBigUInt64();
+
+                        read.nextUInt32(); // adler32
+
+                        const flag = read.nextInt16();
+
+                        if(offset === 0) {
+                            continue;
+                        }
+
+                        const idx = hashes[hash.toString()];
+
+                        this._entries.lookup[idx] = offset + headerLength;
+                        this._entries.length[idx] = flag === 1 ? compressedLength : decompressedLength;
+
+                        if(this._options.hasExtra && Array.isArray(this._entries.extra)) {
+                            this._entries.extra[idx] = 0; // TODO: ?
+                        }
+
+                    }
+                } while (read.isEnd() && read.setPosition(position));
+            }
+        }
     }
 }
 
 export default Index;
-
-const fs = require('graceful-fs');
-const path = require('path');
-const hash = require('uop-hash');
-const BinReader = require('binreader');
-
-// const pad = require('./pad');
-
-class FileIndexReader {
-    constructor(options) {
-        this.options = options;
-        this.readIndex();
-    }
-    get length() {
-        if (this.indexLookups) {
-            return this.indexLookups.length;
-        }
-        return 0;
-    }
-    lookup(index) {
-        if (!this.indexLookups) {
-            return null;
-        }
-        if (index < 0 || index >= this.indexLookups.length) {
-            return {
-                lookup: -1,
-                length: -1
-            };
-        }
-        return {
-            lookup: this.indexLookups[index],
-            length: this.indexLengths[index],
-            extra:  (this.indexExtras || [])[index]
-        };
-    }
-    getMulReader() {
-        if (this.mulReader) {
-            return this.mulReader;
-        }
-        this.mulReader = new BinReader({
-            filename: this.getFullMulPath(),
-            bufferSize: 1024 * 4
-        });
-        return this.mulReader;
-    }
-    getReader() {
-        if (this.reader) {
-            return this.reader;
-        }
-        this.reader = new BinReader({
-            filename: this.getFullPath(),
-            bufferSize: 1024 * 4
-        });
-        return this.reader;
-    }
-    getFullMulPath() {
-        //TODO: combine these two redundant funcs into one
-        if (this.mulPath) {
-            return this.mulPath;
-        }
-        let newPath = path.join(this.options.baseDirectory, this.options.mulFile);
-        const basename = path.basename(this.options.mulFile, '.mul');
-        if (fs.existsSync(newPath)) {
-            this.mulPath = newPath;
-            this.isUOP = false;
-
-            return this.mulPath;
-        }
-
-        newPath = path.join(this.options.baseDirectory, `${basename}LegacyMUL.uop`);
-        if (fs.existsSync(newPath)) {
-            this.mulPath = newPath;
-            this.isUOP = true;
-
-            return this.mulPath;
-        }
-
-        return null;
-    }
-    getFullPath() {
-        if (this.path) {
-            return this.path;
-        }
-        const indexFile = this.options.indexFile || this.options.mulFile;
-        let newPath = path.join(this.options.baseDirectory, indexFile);
-        const basename = path.basename(indexFile, '.idx');
-        if (fs.existsSync(newPath)) {
-            this.path = newPath;
-            this.isUOP = false;
-
-            return this.path;
-        }
-
-        newPath = path.join(this.options.baseDirectory, `${basename}LegacyMUL.uop`);
-        if (fs.existsSync(newPath)) {
-            this.path = newPath;
-            this.isUOP = true;
-
-            return this.path;
-        }
-
-        return null;
-    }
-    readIndex() {
-        const reader = this.getReader();
-
-        if (this.isUOP) {
-            // uop format:
-            if (reader.nextInt() != 0x50594D) {
-                throw 'header magic number is invalid';
-            }
-            reader.nextLong(); // version + sig
-            let nextBlock = reader.nextLong();
-            const blockCapacity = reader.nextInt();
-            const count = reader.nextInt();
-
-            if (!this.options.length) {
-                this.options.length = count;
-            }
-            const hashes = this.buildUOPHashes();
-            const indexLookups = new Int32Array(this.options.length);
-            const indexLengths = new Int32Array(this.options.length);
-            const indexExtras  = this.options.hasExtra ? new Int32Array(this.options.length) : null;
-
-            reader.seek(nextBlock);
-            do {
-                const filesCount = reader.nextInt();
-                nextBlock = reader.nextULong();
-                /*if (nextBlock <= 0) {
-                    break;
-                }*/
-                for(let i = 0; i < filesCount; i++) {
-                    const offset = reader.nextULong();
-                    //console.log(offset);
-
-                    const headerLength = reader.nextInt();
-                    const compressedLength = reader.nextInt();
-                    const decompressedLength = reader.nextInt();
-                    const hash = [reader.nextUInt(), reader.nextUInt()].reverse().join('.');
-                    reader.nextInt(); //adler32
-                    const flag = reader.nextShort();
-                    if (offset === 0) {
-                        continue;
-                    }
-                    const idx = hashes[hash];
-                    /*index[idx] = {
-                        lookup: (offset + headerLength),
-                        length: flag === 1 ? compressedLength : decompressedLength
-                    }*/
-
-                    indexLookups[idx] = (offset + headerLength);
-                    indexLengths[idx] = flag === 1 ? compressedLength : decompressedLength;
-                    if (this.options.hasExtra) {
-                        indexExtras[idx] = 0; // TODO?
-                    }
-                }
-            } while (reader.canRead && reader.seek(nextBlock));
-
-            this.indexLookups = indexLookups;
-            this.indexLengths = indexLengths;
-            this.indexExtras  = indexExtras;
-        } else {
-            // standard mul format:
-            const count = ~~(reader.length / 12);
-            const indexLookups = new Int32Array(this.options.length);
-            const indexLengths = new Int32Array(this.options.length);
-            const indexExtras  = this.options.hasExtra ? new Int32Array(this.options.length) : null;
-
-            for(var i = 0; i < count; i++) {
-                indexLookups[i] = reader.nextInt();
-                indexLengths[i] = reader.nextInt();
-                if (this.options.hasExtra) {
-                    indexExtras[i]   = reader.nextInt();;
-                }
-            }
-            this.indexLookups = indexLookups;
-            this.indexLengths = indexLengths;
-            this.indexExtras  = indexExtras;
-        }
-    }
-    buildUOPHashes() {
-        const hashes = {};
-        const basename = path.basename(this.getFullPath().toLowerCase(), '.uop');
-        for(let i = 0; i < /*header.count*/this.options.length; i++) {
-            const filename = `build/${basename}/${pad(i, 8)}.${this.options.uopFileExtension}`;
-            const hashed = hash(filename).join('.');
-            hashes[hashed] = i;
-        }
-        return hashes;
-    }
-}
-
-module.exports = FileIndexReader;

@@ -66,7 +66,6 @@ const Index = (value: string): string => {
         buffer[4] = (buffer[4] ^ buffer[2]) - ((buffer[2] >>> 18) ^ (buffer[2] << 14) >>> 0);
         buffer[0] = (buffer[5] ^ buffer[4]) - ((buffer[4] >>> 8) ^ (buffer[4] << 24) >>> 0);
 
-
         return (BigInt(buffer[4]) << BigInt(32) | BigInt(buffer[0])).toString();
     }
 

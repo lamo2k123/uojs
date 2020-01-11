@@ -18,10 +18,7 @@
         "allowSyntheticDefaultImports": true,
         "downlevelIteration": true,
         "outDir": "./../build/server",
-        "rootDir": "src",
-        "paths": {
-            "component/*": ["src/components/*"]
-        }
+        "rootDir": "./"
     },
     "include": [
         "src"
